@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+    <meta charset="UTF-8">
+    <title>چت یوتیوب ریل‌تایم</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            direction: rtl;
+            background-color: #111;
+            color: #eee;
+        }
+
+        #messages {
+            border: 1px solid #444;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            background: #222;
+        }
+
+        #input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 16px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #222;
+            color: #eee;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #444;
+            color: #eee;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>💬 چت یوتیوب (ریل‌تایم)</h2>
+    <div id="messages"></div>
+    <div id="input-area">
+        <input id="author" type="text" placeholder="نام شما" />
+        <input id="message" type="text" placeholder="پیام..." />
+        <button id="send">ارسال</button>
+    </div>
+
+    <script>
+        // اتصال به سرور Socket.IO
+        const socket = io("http://localhost:8000");
+
+        socket.on("connect", () => {
+            console.log("✅ Connected to server");
+        });
+
+        socket.on("disconnect", () => {
+            console.log("❌ Disconnected from server");
+        });
+
+        // تابع افزودن پیام به بخش پیام‌ها
+        function addMessage(author, message, isOwn = false) {
+            const msgBox = document.getElementById("messages");
+            const el = document.createElement("div");
+            el.style.marginBottom = "6px";
+            msgBox.appendChild(el);
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        // دریافت پیام جدید از سرور
+        socket.on("new_message", (data) => {
+            addMessage(data.author, data.message);
+        });
+
+        // ارسال پیام
+        function sendMessage() {
+            const authorInput = document.getElementById("author");
+            const messageInput = document.getElementById("message");
+            const author = authorInput.value.trim() || "کاربر";
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit("new_message", { author, message });
+                addMessage(author, message, true);
+                messageInput.value = "";
+                messageInput.focus();
+            }
+        }
+
+        document.getElementById("send").onclick = sendMessage;
+
+        // ارسال پیام با کلید Enter
+        document.getElementById("message").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+
+</html>
